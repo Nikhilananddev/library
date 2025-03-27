@@ -6,11 +6,13 @@ import com.nikhilanand.library.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.ApplicationContextAware;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,9 +21,11 @@ import java.util.Optional;
 @RequestMapping("/api/books")
 @RequiredArgsConstructor
 @Validated
-public class BookController {
+public class BookController  implements ApplicationContextAware{
     @Autowired
    BookService bookService;
+
+    private ApplicationContext context;
 
     @PostMapping
     public ResponseEntity<Book> addBook(@Valid @RequestBody BookRequestDTO bookDto) {
@@ -91,5 +95,24 @@ public class BookController {
         }
         bookService.deleteBook(bookId);
         return ResponseEntity.ok("Book with ID " + bookId + " deleted successfully.");
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.context = applicationContext;
+    }
+
+    @PostMapping("/exit")
+    public ResponseEntity<String> exitApplication() {
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(2000); // Delay for 2 seconds before shutting down
+                System.exit(0);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Shutdown interrupted", e);
+            }
+        });
+        thread.start();
+        return ResponseEntity.ok("Application is shutting down...");
     }
 }
